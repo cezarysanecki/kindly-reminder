@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f2ea">
+  <title>Kindly Reminder</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <form id="task-form" class="task-card">
+      <label class="field-label" for="task">DZISIAJ SKUPIAM SIĘ NA</label>
+      <input id="task" class="task-input" type="text" maxlength="180" placeholder="np. dokończyć szkic strony" autocomplete="off" autofocus required>
+      <div class="field-hint"><span>Jedno zadanie wystarczy.</span><span id="char-count">0 / 180</span></div>
+
+      <div class="settings-grid">
+        <label class="setting" for="interval">
+          <span class="setting-title">PRZYPOMNIENIE CO</span>
+          <span class="setting-value"><strong id="interval-value">5 min</strong></span>
+          <input id="interval" type="range" min="0" max="4" step="1" value="3">
+          <span class="range-ends"><span>30 sek.</span><span>10 min</span></span>
+        </label>
+        <label class="setting" for="duration">
+          <span class="setting-title">CZAS NA ZADANIE</span>
+          <span class="setting-value"><strong id="duration-value">25 min</strong></span>
+          <input id="duration" type="range" min="15" max="30" step="5" value="25">
+          <span class="range-ends"><span>15 min</span><span>30 min</span></span>
+        </label>
+        <label class="setting" for="break">
+          <span class="setting-title">DŁUGOŚĆ PRZERWY</span>
+          <span class="setting-value"><strong id="break-value">5 min</strong></span>
+          <input id="break" type="range" min="5" max="15" step="5" value="5">
+          <span class="range-ends"><span>5 min</span><span>15 min</span></span>
+        </label>
+      </div>
+
+      <fieldset class="tone-picker">
+        <legend>KOLOR ALERTU</legend>
+        <div class="tone-options">
+          <button class="tone-option selected" type="button" data-tone="muted" aria-pressed="true">
+            <span class="tone-swatch muted-swatch"></span><span>Stonowany</span>
+          </button>
+          <button class="tone-option" type="button" data-tone="vivid" aria-pressed="false">
+            <span class="tone-swatch vivid-swatch"></span><span>Wyrazisty</span>
+          </button>
+          <button class="tone-option" type="button" data-tone="bright" aria-pressed="false">
+            <span class="tone-swatch bright-swatch"></span><span>Jaskrawy</span>
+          </button>
+        </div>
+      </fieldset>
+
+      <div class="plan-note"><span aria-hidden="true">☼</span><span>Przypomnę Ci co <b id="plan-interval">5 min</b>. Potem zasugeruję <b id="plan-break">5 min</b> przerwy.</span></div>
+      <button class="primary-button" type="submit"><span>Zaczynam spokojnie</span><span aria-hidden="true">→</span></button>
+      <p id="form-error" class="error" role="alert" hidden></p>
+    </form>
+
+    <section id="active-card" class="active-card" hidden>
+      <div class="active-top"><span class="live-dot"></span> SESJA W TOKU</div>
+      <h2 id="active-task"></h2>
+      <div class="active-meta"><span>Pozostało</span><strong id="time-left">—</strong></div>
+      <div class="progress-track"><span id="progress"></span></div>
+      <p class="active-hint">Możesz zamknąć to okno. Przypomnienia będą działać w tle.</p>
+      <button id="stop-button" class="quiet-button" type="button">Zakończ sesję</button>
+    </section>
+
+    <footer>Małe kroki też prowadzą do celu.</footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

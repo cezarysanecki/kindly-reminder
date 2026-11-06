@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="ground" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#bd8753"/><stop offset="1" stop-color="#92592f"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="24" stdDeviation="22" flood-color="#59381f" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <rect x="28" y="28" width="968" height="968" rx="218" fill="url(#ground)"/>
+  <g filter="url(#shadow)">
+    <circle cx="512" cy="512" r="296" fill="#fff8ee"/>
+    <circle cx="512" cy="512" r="213" fill="none" stroke="#e9d3b9" stroke-width="20"/>
+    <path d="M512 350v170l116 77" fill="none" stroke="#9a6236" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="512" cy="520" r="25" fill="#bd8753"/>
+    <path d="M512 253v-42M512 813v-42M253 512h-42M813 512h-42M329 329l-30-30M725 725l-30-30M695 329l30-30M299 725l30-30" stroke="#fff8ee" stroke-width="24" stroke-linecap="round"/>
+    <path d="M512 170v-17M854 512h-17M512 871v-17M170 512h17" stroke="#f1d9bd" stroke-width="17" stroke-linecap="round"/>
+  </g>
+</svg>

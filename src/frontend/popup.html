@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kindly Reminder</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="popup-body">
+  <main id="popup-card" class="popup-card">
+    <div id="popup-icon" class="popup-icon" aria-hidden="true">✦</div>
+    <div id="popup-eyebrow" class="popup-eyebrow">CHWILA NA SPRAWDZENIE</div>
+    <h1 id="popup-title">Jak Ci idzie?</h1>
+    <p id="popup-message" class="popup-message"></p>
+    <div class="popup-task"><span>TWOJE ZADANIE</span><strong id="popup-task"></strong></div>
+    <div class="popup-actions">
+      <button id="primary-action" class="primary-button" type="button">Wracam do pracy <span>→</span></button>
+      <button id="secondary-action" class="quiet-button" type="button">Zamknij</button>
+    </div>
+    <p id="break-note" class="break-note" hidden>Odejdź na chwilę od ekranu. Zasłużona przerwa też jest częścią pracy.</p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
