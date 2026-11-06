@@ -4,8 +4,9 @@ VERSION := 0.1.0
 DMG := dist/$(APP_NAME)-$(VERSION).dmg
 APP_BUNDLE := $(APP_TITLE).app
 TEMP_DMG := /tmp/$(APP_NAME)-$(VERSION).dmg
+LAUNCHER_APP := .build/Kindly Reminder Launcher.app
 
-.PHONY: dev build run dmg install open
+.PHONY: dev build run dmg install open launcher
 
 dev:
 	tinyjs dev
@@ -15,6 +16,17 @@ build:
 
 run: build
 	./dist/$(APP_NAME)
+
+launcher:
+	@set -e; \
+	app="$(LAUNCHER_APP)"; \
+	mkdir -p "$$app/Contents/MacOS"; \
+	cp scripts/launch-from-dock.sh "$$app/Contents/MacOS/KindlyReminderLauncher"; \
+	chmod +x "$$app/Contents/MacOS/KindlyReminderLauncher" scripts/run-in-terminal.command; \
+	cp scripts/launcher-Info.plist "$$app/Contents/Info.plist"; \
+	echo "Gotowy launcher: $$app"; \
+	echo 'Przeciągnij go z Findera do Docka, aby przypiąć.'; \
+	open -R "$$app"
 
 dmg:
 	tinyjs build

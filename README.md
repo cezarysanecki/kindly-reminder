@@ -16,6 +16,8 @@ Te same czynności są dostępne przez `make dev`, `make build` i `make dmg`. `m
 
 Uruchom `make dev`, aby wystartować aplikację bezpośrednio z projektu, albo `make run`, aby zbudować i uruchomić lokalny plik wykonywalny z `dist/`. Te polecenia nie tworzą DMG ani nie kopiują aplikacji do `/Applications`. Jeśli firmowe zasady blokują także uruchamianie lokalnych aplikacji, poproś IT o zatwierdzony sposób uruchomienia.
 
+Aby przypiąć launcher do Docka, uruchom `make launcher`. Finder pokaże aplikację `Kindly Reminder Launcher`; przeciągnij ją do Docka. Kliknięcie ikony otwiera Terminal i uruchamia wersję deweloperską przez `make dev`. Zamknięcie aplikacji zatrzymuje sesję w Terminalu.
+
 Budowa aplikacji:
 
 ```sh
