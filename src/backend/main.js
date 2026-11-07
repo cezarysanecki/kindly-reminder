@@ -155,7 +155,7 @@ export async function init(app) {
     if (activeSession.phase === 'break') await finishBreak(app);
     else await finishSession(app);
   } else if (activeSession) {
-    app.win.hide();
+    app.win.hide({ app: false });
     await scheduleNext(app);
   }
 }
@@ -236,7 +236,7 @@ export const api = {
     popupData = null;
     await app.store.set(SETTINGS_KEY, { intervalSeconds: interval, durationMinutes: duration, breakMinutes: breakLength, alertTone: safeTone });
     await saveSession(app);
-    await app.win.hide();
+    await app.win.hide({ app: false });
     await scheduleNext(app);
     return activeSession;
   },
