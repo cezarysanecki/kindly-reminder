@@ -1,17 +1,70 @@
 const SESSION_KEY = 'activeSession';
 const SETTINGS_KEY = 'preferences';
 const REMINDER_OPTIONS = [30, 60, 120, 300, 600];
+const DEFAULT_PREFERENCES = { intervalSeconds: 300, durationMinutes: 25, breakMinutes: 5, alertTone: 'muted', reminderWidth: 920, reminderHeight: 320, reminderFontSize: 72 };
 
 let activeSession = null;
 let popupData = null;
 let timer = null;
+let trayTitle = null;
+let trayIcon = 'sf:timer';
 
 function clearTimer() {
   if (timer !== null) clearTimeout(timer);
   timer = null;
 }
 
+function closest(options, value) {
+  return options.reduce((best, option) => Math.abs(option - value) < Math.abs(best - value) ? option : best, options[0]);
+}
+
+function clampStep(value, min, max, step, fallback) {
+  return Math.min(max, Math.max(min, Math.round((Number(value) || fallback) / step) * step));
+}
+
+function cleanPreferences({ intervalSeconds, durationMinutes, breakMinutes, alertTone, reminderWidth, reminderHeight, reminderFontSize }) {
+  return {
+    intervalSeconds: closest(REMINDER_OPTIONS, Number(intervalSeconds) || 300),
+    durationMinutes: clampStep(durationMinutes, 15, 30, 5, 25),
+    breakMinutes: closest([5, 10, 15], Number(breakMinutes || 5)),
+    alertTone: ['muted', 'vivid', 'bright'].includes(alertTone) ? alertTone : 'muted',
+    reminderWidth: clampStep(reminderWidth, 320, 1200, 20, DEFAULT_PREFERENCES.reminderWidth),
+    reminderHeight: clampStep(reminderHeight, 100, 480, 10, DEFAULT_PREFERENCES.reminderHeight),
+    reminderFontSize: clampStep(reminderFontSize, 16, 120, 2, DEFAULT_PREFERENCES.reminderFontSize),
+  };
+}
+
+async function loadPreferences(app) {
+  return { ...DEFAULT_PREFERENCES, ...((await app.store.get(SETTINGS_KEY)) ?? {}) };
+}
+
+// The menu bar shows the time left, so it's clear the session runs in the background.
+function refreshTray(app) {
+  const minutesLeft = activeSession ? Math.max(1, Math.ceil((activeSession.endsAt - Date.now()) / 60_000)) : 0;
+  const title = !activeSession ? '' : activeSession.phase === 'break' ? `Przerwa ${minutesLeft} min` : `${minutesLeft} min`;
+  if (title === trayTitle) return;
+  trayTitle = title;
+  app.tray.set({
+    title,
+    icon: trayIcon,
+    tooltip: 'Kindly Reminder — przypomnienia o zadaniu',
+    menu: [
+      { id: 'show', label: 'Otwórz Kindly Reminder' },
+      { id: 'stop', label: 'Zakończ bieżącą sesję' },
+      { separator: true },
+      { id: 'quit', label: 'Zamknij aplikację' },
+    ],
+  });
+}
+
+// During a session the app lives only in the menu bar: no Dock icon, no main window.
+function hideToMenuBar(app) {
+  app.win.hide({ app: false });
+  app.presence('menubar');
+}
+
 async function saveSession(app) {
+  refreshTray(app);
   await app.store.set(SESSION_KEY, activeSession);
 }
 
@@ -33,18 +86,31 @@ async function screensForPopup(app, width, height) {
   };
 }
 
-async function showPopup(app, kind) {
-  if (!activeSession && kind !== 'complete' && kind !== 'break-complete') return;
-  popupData = {
+// preview: sample reminder shown while the user adjusts its size in the main window.
+async function showPopup(app, kind, preview = null) {
+  if (!activeSession && !preview && kind !== 'complete' && kind !== 'break-complete') return;
+  const prefs = preview ?? await loadPreferences(app);
+  popupData = preview ? {
+    kind,
+    preview: true,
+    task: 'Przykładowe zadanie',
+    alertTone: preview.alertTone,
+    reminderWidth: preview.reminderWidth,
+    reminderHeight: preview.reminderHeight,
+    reminderFontSize: preview.reminderFontSize,
+  } : {
     kind,
     task: activeSession?.task ?? popupData?.task ?? '',
     breakMinutes: activeSession?.breakMinutes ?? popupData?.breakMinutes ?? 5,
     alertTone: activeSession?.alertTone ?? popupData?.alertTone ?? 'muted',
     durationMinutes: activeSession?.durationMinutes ?? 25,
+    reminderWidth: prefs.reminderWidth,
+    reminderHeight: prefs.reminderHeight,
+    reminderFontSize: prefs.reminderFontSize,
   };
 
-  const requestedWidth = kind === 'reminder' ? 920 : 620;
-  const requestedHeight = kind === 'reminder' ? 320 : kind === 'complete' ? 340 : 360;
+  const requestedWidth = kind === 'reminder' ? prefs.reminderWidth : 620;
+  const requestedHeight = kind === 'reminder' ? prefs.reminderHeight : kind === 'complete' ? 340 : 360;
   const position = await screensForPopup(app, requestedWidth, requestedHeight);
   const width = position.width ?? requestedWidth;
   const height = position.height ?? requestedHeight;
@@ -66,7 +132,8 @@ async function showPopup(app, kind) {
     await app.win.open('popup', options);
   } else if (kind === 'reminder') {
     // Opening an existing TinyJS window focuses it, so reuse it directly for reminders.
-    popup.hide({ app: false });
+    // The preview stays visible between slider moves to avoid flicker.
+    if (!preview) popup.hide({ app: false });
   } else {
     await app.win.open('popup', options);
   }
@@ -132,30 +199,23 @@ async function scheduleNext(app) {
 }
 
 async function openMain(app, { focusTask = false } = {}) {
+  await app.presence('normal');
   await app.win.show();
   if (focusTask) app.win.push('focus-task', {});
 }
 
 export async function init(app) {
   await app.win.setHideOnClose(true);
-  const os = await app.system.os();
-  await app.tray.set({
-    icon: os === 'macos' ? 'sf:timer' : 'emoji:⏳',
-    tooltip: 'Kindly Reminder — przypomnienia o zadaniu',
-    menu: [
-      { id: 'show', label: 'Otwórz Kindly Reminder' },
-      { id: 'stop', label: 'Zakończ bieżącą sesję' },
-      { separator: true },
-      { id: 'quit', label: 'Zamknij aplikację' },
-    ],
-  });
+  if ((await app.system.os()) !== 'macos') trayIcon = 'emoji:⏳';
+  refreshTray(app);
+  setInterval(() => refreshTray(app), 15_000);
 
   activeSession = await app.store.get(SESSION_KEY);
   if (activeSession && activeSession.endsAt <= Date.now()) {
     if (activeSession.phase === 'break') await finishBreak(app);
     else await finishSession(app);
   } else if (activeSession) {
-    app.win.hide({ app: false });
+    hideToMenuBar(app);
     await scheduleNext(app);
   }
 }
@@ -166,14 +226,13 @@ export async function onTray(id, app) {
     return;
   }
   if (id === 'stop') {
-    if (activeSession) {
-      clearTimer();
-      activeSession = null;
-      popupData = null;
-      await saveSession(app);
-      app.win.close('popup');
-      await openMain(app);
-    }
+    clearTimer();
+    activeSession = null;
+    popupData = null;
+    await saveSession(app);
+    app.win.close('popup');
+    // focusTask also switches the main window from the session card back to the form.
+    await openMain(app, { focusTask: true });
     return;
   }
   if (id === null || id === 'show') await openMain(app);
@@ -186,57 +245,45 @@ export async function onSystem(kind, _value, app) {
 export const api = {
   getState: async (_params, app) => ({
     session: activeSession,
-    preferences: (await app.store.get(SETTINGS_KEY)) ?? { intervalSeconds: 300, durationMinutes: 25, breakMinutes: 5, alertTone: 'muted' },
+    preferences: await loadPreferences(app),
     popup: popupData,
   }),
 
-  savePreferences: async ({ intervalSeconds, durationMinutes, breakMinutes, alertTone }, app) => {
-    const requestedInterval = Number(intervalSeconds) || 300;
-    const safeInterval = REMINDER_OPTIONS.reduce((closest, option) =>
-      Math.abs(option - requestedInterval) < Math.abs(closest - requestedInterval) ? option : closest,
-    REMINDER_OPTIONS[0]);
-    const prefs = {
-      intervalSeconds: safeInterval,
-      durationMinutes: Math.min(30, Math.max(15, Math.round((Number(durationMinutes) || 25) / 5) * 5)),
-      breakMinutes: [5, 10, 15].reduce((closest, option) =>
-        Math.abs(option - Number(breakMinutes || 5)) < Math.abs(closest - Number(breakMinutes || 5)) ? option : closest,
-      5),
-      alertTone: ['muted', 'vivid', 'bright'].includes(alertTone) ? alertTone : 'muted',
-    };
+  // Each window sends only its own settings; the rest keep their stored values.
+  savePreferences: async (params, app) => {
+    const prefs = cleanPreferences({ ...await loadPreferences(app), ...params });
     await app.store.set(SETTINGS_KEY, prefs);
     return prefs;
   },
 
-  startSession: async ({ task, intervalSeconds, durationMinutes, breakMinutes, alertTone }, app) => {
+  previewReminder: async (params, app) => {
+    if (activeSession) return { ok: false };
+    await showPopup(app, 'reminder', cleanPreferences({ ...await loadPreferences(app), ...params }));
+    return { ok: true };
+  },
+
+  startSession: async ({ task, ...params }, app) => {
     const cleanTask = typeof task === 'string' ? task.trim().slice(0, 180) : '';
     if (!cleanTask) throw new Error('Wpisz, nad czym teraz pracujesz.');
     if (activeSession) throw new Error('Sesja już trwa. Zakończ ją przed rozpoczęciem kolejnej.');
 
-    const requestedInterval = Number(intervalSeconds) || 300;
-    const interval = REMINDER_OPTIONS.reduce((closest, option) =>
-      Math.abs(option - requestedInterval) < Math.abs(closest - requestedInterval) ? option : closest,
-    REMINDER_OPTIONS[0]);
-    const duration = Math.min(30, Math.max(15, Math.round((Number(durationMinutes) || 25) / 5) * 5));
-    const breakLength = [5, 10, 15].reduce((closest, option) =>
-      Math.abs(option - Number(breakMinutes || 5)) < Math.abs(closest - Number(breakMinutes || 5)) ? option : closest,
-    5);
-    const safeTone = ['muted', 'vivid', 'bright'].includes(alertTone) ? alertTone : 'muted';
+    const prefs = cleanPreferences({ ...await loadPreferences(app), ...params });
     const now = Date.now();
     activeSession = {
       phase: 'work',
       task: cleanTask,
-      intervalSeconds: interval,
-      durationMinutes: duration,
-      breakMinutes: breakLength,
-      alertTone: safeTone,
+      intervalSeconds: prefs.intervalSeconds,
+      durationMinutes: prefs.durationMinutes,
+      breakMinutes: prefs.breakMinutes,
+      alertTone: prefs.alertTone,
       startedAt: now,
-      endsAt: now + duration * 60_000,
-      nextReminderAt: now + interval * 1000,
+      endsAt: now + prefs.durationMinutes * 60_000,
+      nextReminderAt: now + prefs.intervalSeconds * 1000,
     };
     popupData = null;
-    await app.store.set(SETTINGS_KEY, { intervalSeconds: interval, durationMinutes: duration, breakMinutes: breakLength, alertTone: safeTone });
+    await app.store.set(SETTINGS_KEY, prefs);
     await saveSession(app);
-    await app.win.hide({ app: false });
+    hideToMenuBar(app);
     await scheduleNext(app);
     return activeSession;
   },

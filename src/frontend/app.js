@@ -43,6 +43,7 @@ function renderSession(session) {
     byId('stop-button').textContent = session.phase === 'break' ? 'Zakończ przerwę' : 'Zakończ sesję';
     updateCountdown();
   }
+  fitWindow();
 }
 
 function updateCountdown() {
@@ -75,6 +76,17 @@ intervalInput.addEventListener('change', savePreferences);
 durationInput.addEventListener('change', savePreferences);
 breakInput.addEventListener('change', savePreferences);
 
+byId('settings-button').addEventListener('click', () => {
+  if (!window.tiny?.win) return;
+  tiny.win.open('settings', { page: 'settings.html', title: 'Wygląd przypomnienia', size: '620x250', minSize: '520x230', parent: true });
+});
+
+// The window follows its content so the form has no empty space below it.
+function fitWindow() {
+  if (!window.tiny?.win) return;
+  requestAnimationFrame(() => tiny.win.setSize(window.innerWidth, document.querySelector('.app-shell').offsetHeight + 32));
+}
+
 function setAlertTone(tone) {
   alertTone = tone;
   document.body.dataset.tone = tone;
@@ -92,15 +104,19 @@ document.querySelectorAll('.tone-option').forEach((button) => {
   });
 });
 
+function currentPreferences() {
+  return {
+    intervalSeconds: reminderSeconds[Number(intervalInput.value)],
+    durationMinutes: Number(durationInput.value),
+    breakMinutes: Number(breakInput.value),
+    alertTone,
+  };
+}
+
 async function savePreferences() {
   if (!window.tiny?.api) return;
   try {
-    await tiny.api.call('savePreferences', {
-      intervalSeconds: reminderSeconds[Number(intervalInput.value)],
-      durationMinutes: Number(durationInput.value),
-      breakMinutes: Number(breakInput.value),
-      alertTone,
-    });
+    await tiny.api.call('savePreferences', currentPreferences());
   } catch (_error) {
     // The selected values remain usable for this session even if saving fails.
   }
@@ -128,13 +144,7 @@ form.addEventListener('submit', async (event) => {
   button.disabled = true;
   showError();
   try {
-    const session = await tiny.api.call('startSession', {
-      task,
-      intervalSeconds: reminderSeconds[Number(intervalInput.value)],
-      durationMinutes: Number(durationInput.value),
-      breakMinutes: Number(breakInput.value),
-      alertTone,
-    });
+    const session = await tiny.api.call('startSession', { task, ...currentPreferences() });
     renderSession(session);
   } catch (error) {
     showError(typeof error === 'string' ? error : 'Nie udało się rozpocząć sesji.');

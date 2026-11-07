@@ -2,6 +2,19 @@ const byId = (id) => document.getElementById(id);
 let currentPopup = null;
 let autoDismissTimer = null;
 
+// Uses the chosen font size, shrinking it only when the task doesn't fit the window.
+function fitTitle() {
+  if (currentPopup?.kind !== 'reminder') return;
+  const card = byId('popup-card');
+  const title = byId('popup-title');
+  let size = currentPopup.reminderFontSize || 72;
+  title.style.fontSize = `${size}px`;
+  while (size > 12 && (card.scrollHeight > card.clientHeight || card.scrollWidth > card.clientWidth)) {
+    size -= 2;
+    title.style.fontSize = `${size}px`;
+  }
+}
+
 function renderPopup(data) {
   if (!data) return;
   currentPopup = data;
@@ -16,10 +29,12 @@ function renderPopup(data) {
   card.classList.toggle('reminder-mode', reminder);
   if (reminder) {
     const task = data.task || 'Twoje zadanie';
-    const fontSize = task.length <= 18 ? 100 : task.length <= 35 ? 82 : task.length <= 60 ? 64 : 48;
+    // Padding was tuned for a 920x320 reminder; scale it with the chosen size.
+    const scale = Math.min((data.reminderWidth || 920) / 920, (data.reminderHeight || 320) / 320);
+    card.style.setProperty('--scale', scale);
     byId('popup-title').textContent = task;
-    byId('popup-title').style.fontSize = `${fontSize}px`;
-    autoDismissTimer = setTimeout(() => call('dismissPopup'), 9000);
+    fitTitle();
+    if (!data.preview) autoDismissTimer = setTimeout(() => call('dismissPopup'), 9000);
     return;
   }
   byId('popup-title').style.fontSize = '';
@@ -66,6 +81,8 @@ if (window.tiny?.api) {
   tiny.api.on('popup:update', renderPopup);
   tiny.api.call('getState').then((state) => renderPopup(state.popup));
 }
+
+window.addEventListener('resize', fitTitle);
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && currentPopup?.kind === 'reminder') call('dismissPopup');

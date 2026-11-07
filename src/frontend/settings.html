@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wygląd przypomnienia</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="settings-shell">
+    <div class="field-label">WYGLĄD PRZYPOMNIENIA</div>
+      <div class="settings-grid">
+        <label class="setting" for="reminder-width">
+          <span class="setting-title">SZEROKOŚĆ OKNA</span>
+          <span class="setting-value"><strong id="reminder-width-value">920 px</strong></span>
+          <input id="reminder-width" type="range" min="320" max="1200" step="20" value="920">
+          <span class="range-ends"><span>320 px</span><span>1200 px</span></span>
+        </label>
+        <label class="setting" for="reminder-height">
+          <span class="setting-title">WYSOKOŚĆ OKNA</span>
+          <span class="setting-value"><strong id="reminder-height-value">320 px</strong></span>
+          <input id="reminder-height" type="range" min="100" max="480" step="10" value="320">
+          <span class="range-ends"><span>100 px</span><span>480 px</span></span>
+        </label>
+        <label class="setting" for="reminder-font">
+          <span class="setting-title">WIELKOŚĆ TEKSTU</span>
+          <span class="setting-value"><strong id="reminder-font-value">72 px</strong></span>
+          <input id="reminder-font" type="range" min="16" max="120" step="2" value="72">
+          <span class="range-ends"><span>16 px</span><span>120 px</span></span>
+        </label>
+      </div>
+    <p class="active-hint">Przesuń suwak, aby zobaczyć przykładowe przypomnienie.</p>
+  </main>
+  <script src="settings.js"></script>
+</body>
+</html>

@@ -30,6 +30,10 @@ button { cursor: pointer; }
 .eyebrow { color: var(--accent); font-size: 9px; font-weight: 800; letter-spacing: 1.9px; }
 .intro h1 { margin: 10px 0 9px; font-family: Georgia, "Times New Roman", serif; font-size: 35px; line-height: 1.08; font-weight: 500; letter-spacing: -.8px; }
 .intro p { max-width: 430px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.gear-button { flex: none; margin: -8px 0 -6px auto; width: 38px; height: 38px; padding: 0; border: 1px solid var(--line); border-radius: 9px; color: #8a7d6d; background: #fffefa; font-size: 22px; line-height: 1; }
+.gear-button:hover { border-color: #c5a17e; color: var(--accent); }
+.settings-shell { padding: 16px 20px 4px; }
+.settings-shell .settings-grid { margin-top: 10px; }
 .task-card, .active-card { padding: 17px 23px 15px; border: 1px solid #ece3d8; border-radius: 17px; background: rgba(255,253,249,.95); box-shadow: 0 12px 35px rgba(88,62,37,.07); }
 .field-label, .setting-title { display: block; color: #897b6b; font-size: 9px; font-weight: 800; letter-spacing: 1.25px; }
 .task-input { display: block; width: 100%; height: 52px; margin-top: 9px; padding: 12px 14px; border: 1px solid #e6ddd2; border-radius: 9px; outline: none; color: var(--ink); background: #fcfaf6; font-size: 14px; transition: border-color .18s, box-shadow .18s; }
@@ -42,7 +46,7 @@ button { cursor: pointer; }
 .setting-value strong { color: var(--ink); font-family: Georgia, serif; font-size: 21px; font-weight: 500; }
 input[type="range"] { display: block; width: 100%; height: 17px; margin: 11px 0 5px; accent-color: var(--accent); cursor: pointer; }
 .range-ends { display: flex; justify-content: space-between; color: #a1978b; font-size: 9px; }
-.plan-note { display: flex; align-items: flex-start; gap: 9px; margin: 11px 1px 12px; color: #817567; font-size: 11px; line-height: 1.45; }
+.plan-note { display: flex; align-items: center; gap: 9px; margin: 11px 1px 12px; color: #817567; font-size: 11px; line-height: 1.45; }
 .plan-note > span:first-child { color: #b17a45; font-size: 16px; line-height: 14px; }
 .plan-note b { color: #5c4b39; font-weight: 700; }
 .tone-picker { min-width: 0; margin: 12px 0 0; padding: 0; border: 0; }
@@ -95,16 +99,18 @@ body[data-tone="bright"] { --accent: #c400a0; --accent-dark: #950078; --accent-p
 body[data-tone="muted"] { --focus-bg: #a77b4e; }
 body[data-tone="vivid"] { --focus-bg: #d94032; }
 body[data-tone="bright"] { --focus-bg: #dc00b3; }
-.popup-body.focus-mode { padding: 0; }
+.popup-body.focus-mode { height: 100vh; padding: 0; overflow: hidden; }
 .popup-card.reminder-mode {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  min-height: 100%;
-  padding: 38px 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  padding: calc(38px * var(--scale, 1)) calc(64px * var(--scale, 1));
   border: 0;
-  border-radius: 21px;
+  border-radius: calc(21px * var(--scale, 1));
   color: #fff;
   background: var(--focus-bg, #a77b4e);
   box-shadow: 0 20px 54px rgba(35,18,9,.36);
@@ -116,10 +122,9 @@ body[data-tone="bright"] { --focus-bg: #dc00b3; }
   margin: 0;
   color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: clamp(48px, 9vw, 100px);
   font-weight: 800;
   line-height: 1.02;
-  letter-spacing: -2.8px;
+  letter-spacing: calc(-2.8px * var(--scale, 1));
   overflow-wrap: anywhere;
   text-shadow: 0 2px 1px rgba(38,13,24,.1);
 }
